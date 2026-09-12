@@ -10,8 +10,8 @@ import (
 
 // This file decodes the three distinct little sub-languages Cobalt Strike
 // compiles a Malleable C2 profile into and bakes straight into the Beacon
-// binary. They're easy to mix up — all three are opcode streams read from a
-// blob-typed setting — so each gets its own decoder rather than one
+// binary. They're easy to mix up (all three are opcode streams read from a
+// blob-typed setting), so each gets its own decoder rather than one
 // generic "transform" path:
 //
 //   - ProcInject_PrependAppend_x86/x64 (46/47): not really an opcode stream
@@ -19,8 +19,8 @@ import (
 //     shellcode, most often to break naive signature scans of the injected
 //     region.
 //   - Malleable_C2_Instructions (11): how the beacon transforms the raw
-//     bytes it gets back from the C2 server before treating them as tasking
-//     — e.g. "strip N bytes off the front, then base64-decode".
+//     bytes it gets back from the C2 server before treating them as tasking,
+//     e.g. "strip N bytes off the front, then base64-decode".
 //   - HttpGet_Metadata / HttpPost_Metadata (12/13): the richer instruction
 //     set for how the beacon's *outbound* session id and task output get
 //     smuggled into headers, URI segments, or POST parameters.
@@ -70,7 +70,7 @@ var malleableOps = map[uint32]string{
 
 // decodeMalleableStream reads a stream of big-endian uint32 opcodes,
 // stopping at a 0 opcode, truncated input, or (deliberately, unlike the
-// steps below) any opcode this decoder doesn't recognize — an unbounded
+// steps below) any opcode this decoder doesn't recognize. An unbounded
 // blob under attacker control should never be able to spin this loop
 // forever.
 func decodeMalleableStream(raw []byte) []string {
@@ -107,7 +107,7 @@ func decodeMalleableStream(raw []byte) []string {
 }
 
 // headerTransformOps names every opcode HttpGet_Metadata / HttpPost_Metadata
-// can carry — Cobalt Strike's own vocabulary for a Malleable C2 profile's
+// can carry: Cobalt Strike's own vocabulary for a Malleable C2 profile's
 // client { metadata / output } blocks compiled to bytecode.
 var headerTransformOps = map[uint32]string{
 	3: "base64", 4: "print", 8: "netbios", 11: "netbiosu",
@@ -119,8 +119,8 @@ var headerTransformOps = map[uint32]string{
 // ("build") switches which output bucket subsequent steps land in: index 12
 // always feeds Metadata, while on index 13 a build with a zero name selects
 // SessionId and any other name selects Output. Opcode 14 ("strrep") isn't
-// handled — matching the reference implementation, which also stops there —
-// so a profile step that uses it truncates the decoded chain at that point
+// handled, matching the reference implementation, which also stops there.
+// A profile step that uses it truncates the decoded chain at that point
 // rather than misinterpreting the bytes that follow.
 func decodeHeaderTransform(index int, raw []byte) HeaderTransformValue {
 	r := bytes.NewReader(raw)
@@ -199,7 +199,7 @@ func decodeHeaderTransform(index int, raw []byte) HeaderTransformValue {
 // decodeExecuteChain reads ProcInject_Execute (index 51): a sequence of
 // single-byte technique IDs from the executeType table, terminated by a
 // zero byte. A byte that isn't in the table marks a "custom" technique
-// instead of ending the chain — three bytes are skipped (an internal marker
+// instead of ending the chain: three bytes are skipped (an internal marker
 // this decoder doesn't need), then two length-prefixed strings follow
 // (module and function name for an indirect syscall-style technique),
 // rendered as "module:function".

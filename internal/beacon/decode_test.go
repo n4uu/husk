@@ -36,7 +36,7 @@ func TestReadEntriesStopsAtZeroPadding(t *testing.T) {
 
 func TestReadEntriesRejectsBadFixedWidth(t *testing.T) {
 	// A TypeShort header claiming a length other than 2 isn't a real short
-	// value — ReadEntries must stop rather than misread the stream.
+	// value, so ReadEntries must stop rather than misread the stream.
 	blob := []byte{0, 2, 0, 1, 0, 4, 0, 0, 0, 0}
 	if entries := ReadEntries(blob); len(entries) != 0 {
 		t.Fatalf("got %d entries from a malformed width header, want 0", len(entries))
@@ -45,7 +45,7 @@ func TestReadEntriesRejectsBadFixedWidth(t *testing.T) {
 
 func TestReadEntriesBoundsSafety(t *testing.T) {
 	// A length that would run past the buffer must stop the walk, not panic
-	// or read out of bounds — this is attacker-controlled input.
+	// or read out of bounds; this is attacker-controlled input.
 	blob := []byte{0, 8, 0, 3, 0xff, 0xff, 'x'}
 	if entries := ReadEntries(blob); len(entries) != 0 {
 		t.Fatalf("got %d entries from a truncated value, want 0", len(entries))
@@ -73,7 +73,7 @@ func TestDecodeUnknownIndexIsSurfaced(t *testing.T) {
 		t.Errorf("Name = %q, want unknown_200", s.Name)
 	}
 	if s.Value != int64(42) {
-		t.Errorf("Value = %v, want 42 — an unrecognized index should still decode by its wire type", s.Value)
+		t.Errorf("Value = %v, want 42 (an unrecognized index should still decode by its wire type)", s.Value)
 	}
 }
 

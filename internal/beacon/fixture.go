@@ -6,7 +6,7 @@ import (
 )
 
 // This file builds synthetic Beacon configs and the minimal PE containers
-// to carry them — never used by the decode path, only by tests and the
+// to carry them. It's never used by the decode path, only by tests and the
 // `husk fixture` CLI command. It exists so husk's correctness can be
 // demonstrated and regression-tested without a real (and, for anyone
 // cloning the repo, legally and operationally awkward to obtain) Cobalt
@@ -42,15 +42,15 @@ func Str(index uint16, s string, width int) Field {
 	return Field{Index: index, Type: TypeStr, Value: b}
 }
 
-// Raw builds a TypeStr field from an exact byte string with no padding —
-// for fields, like the ProcInject transform blobs, that are themselves a
-// fully self-describing sub-format.
+// Raw builds a TypeStr field from an exact byte string with no padding, for
+// fields, like the ProcInject transform blobs, that are themselves a fully
+// self-describing sub-format.
 func Raw(index uint16, b []byte) Field {
 	return Field{Index: index, Type: TypeStr, Value: b}
 }
 
-// BuildBlob writes fields as a sequential TLV stream — the layout
-// ReadEntries expects — zero-padded to size (Cobalt Strike itself pads the
+// BuildBlob writes fields as a sequential TLV stream, the same layout
+// ReadEntries expects, zero-padded to size (Cobalt Strike itself pads the
 // real config block to a fixed 4096 bytes).
 func BuildBlob(fields []Field, size int) []byte {
 	var buf bytes.Buffer

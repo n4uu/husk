@@ -7,13 +7,13 @@ import (
 
 // BuildMinimalPE wraps sectionData in the smallest PE32 file the standard
 // library's debug/pe will parse: a DOS header, a COFF header, a full
-// IMAGE_OPTIONAL_HEADER32 (all 16 data directories present, all zeroed —
-// this fixture has no imports, exports or relocations to describe), and a
-// single ".data" section. Every field is filled with a real, spec-correct
-// value rather than left zero where the format allows it, since the point
-// of building this by hand is to prove husk's PE section reader really
-// walks a standards-compliant section table — not to see how much a lenient
-// parser will let us skip.
+// IMAGE_OPTIONAL_HEADER32 (all 16 data directories present, all zeroed,
+// since this fixture has no imports, exports or relocations to describe),
+// and a single ".data" section. Every field is filled with a real,
+// spec-correct value rather than left zero where the format allows it: the
+// point of building this by hand is to prove husk's PE section reader
+// really walks a standards-compliant section table, not to see how much a
+// lenient parser will let us skip.
 func BuildMinimalPE(sectionData []byte) []byte {
 	const (
 		fileAlign    = 0x200

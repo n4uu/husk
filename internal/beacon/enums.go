@@ -2,7 +2,7 @@ package beacon
 
 import "strconv"
 
-// The tables below are fixed by the Beacon binary format itself — every
+// The tables below are fixed by the Beacon binary format itself. Every
 // build agrees on them, since they're read by Beacon's own C code rather
 // than chosen per-deployment. Verified against the public reference
 // implementation; see README.md for citations.

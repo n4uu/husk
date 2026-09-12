@@ -5,8 +5,8 @@ import (
 	"debug/pe"
 )
 
-// Source is one region of an input file worth searching for a config —
-// searching sections individually before falling back to the whole file
+// Source is one region of an input file worth searching for a config.
+// Searching sections individually before falling back to the whole file
 // keeps false-positive structural matches (see recover.go) rare, since a
 // section boundary is a much smaller haystack than an entire binary.
 type Source struct {
@@ -21,8 +21,8 @@ var sectionPriority = []string{".data", ".rdata", ".text"}
 
 // Sources returns the regions of raw worth searching, in priority order. If
 // raw doesn't parse as a PE at all, it's returned as the sole, whole-file
-// source — the caller (a raw section dump, a memory-dumped shellcode blob,
-// an already-decrypted stager) is handled the same way either path.
+// source, since the caller (a raw section dump, a memory-dumped shellcode
+// blob, an already-decrypted stager) is handled the same way either path.
 func Sources(raw []byte) []Source {
 	f, err := pe.NewFile(bytes.NewReader(raw))
 	if err != nil {
@@ -48,9 +48,8 @@ func Sources(raw []byte) []Source {
 		sources = append(sources, Source{Name: "PE section " + name, Data: data})
 	}
 
-	// However the config wasn't in one of the usual sections — an unusual
-	// build, a packed loader — fall back to the whole file so it's still
-	// found.
+	// If the config wasn't in one of the usual sections (an unusual build, a
+	// packed loader), fall back to the whole file so it's still found.
 	sources = append(sources, Source{Name: "whole file", Data: raw})
 
 	return sources

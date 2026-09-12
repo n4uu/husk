@@ -30,7 +30,7 @@ type def struct {
 }
 
 // catalog maps a Beacon setting index to its decode rule. Indices, names and
-// wire types are the format itself — every Beacon build agrees on them —
+// wire types are the format itself: every Beacon build agrees on them,
 // and were verified against the public reference implementation line by
 // line (README.md has citations). Indices missing from this map still
 // decode fine as an untyped "unknown_N" setting; the catalog only adds the
@@ -113,7 +113,7 @@ var catalog = map[int]def{
 }
 
 // silent lists settings that are catalogued but rarely useful in a first
-// read of a config — raw stub/shellcode blobs mostly — so the default
+// read of a config (raw stub/shellcode blobs, mostly), so the default
 // human-readable report omits them. -all on the CLI shows everything.
 var silent = map[string]bool{
 	"PublicKey":       true,

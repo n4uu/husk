@@ -9,7 +9,7 @@ import (
 
 const nameColumnWidth = 32
 
-// jsonSetting is the on-the-wire JSON shape for one decoded setting — Raw is
+// jsonSetting is the on-the-wire JSON shape for one decoded setting. Raw is
 // left out, since every kind of Value already carries whatever of the raw
 // bytes is worth keeping (hex, a string, a struct).
 type jsonSetting struct {
@@ -31,7 +31,7 @@ func RenderJSON(settings []Setting) ([]byte, error) {
 }
 
 // RenderText formats settings as aligned "Name - value" lines for a
-// terminal. Settings in the silent set (raw stub/shellcode blobs — see
+// terminal. Settings in the silent set (raw stub/shellcode blobs, see
 // settings.go) are skipped unless showSilent is set; an empty or
 // zero-valued setting is skipped either way, since a config with 60-odd
 // possible settings typically only sets a handful of them.

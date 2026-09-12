@@ -5,24 +5,24 @@
 [![License: MIT](https://img.shields.io/badge/License-MIT-blue.svg)](LICENSE)
 
 **A Cobalt Strike Beacon configuration extractor.** Point it at a PE, a
-section dump, or a memory-carved blob; it recovers the XOR key, decodes the
-type-length-value configuration block, and prints the C2 servers, sleep
+section dump, or a memory-carved blob, and it recovers the XOR key, decodes
+the type-length-value configuration block, and prints the C2 servers, sleep
 timers, process-injection technique, and Malleable C2 profile baked into the
-implant — the way an incident responder pulls infrastructure and behavior
-out of a sample recovered from a compromised host, before it goes into a
-blocklist or a report.
+implant. That's the same information an incident responder pulls out of a
+sample recovered from a compromised host before it goes into a blocklist or
+a report.
 
 A from-scratch, clean-room implementation written directly against the wire
-format, cross-checked line-by-line against the public reference
-implementation for correctness (see [Format reference](#format-reference)) —
-no code from it or any other parser was copied.
+format, cross-checked line by line against the public reference
+implementation for correctness (see [Format reference](#format-reference)).
+No code from it, or any other parser, was copied.
 
-## Demo — no real sample needed
+## Demo, no real sample needed
 
 ```
 $ husk fixture -out sample.bin
 wrote synthetic fixture to sample.bin (4608 bytes, key 0x2e)
-this is NOT malware — it's a hand-built config in husk's own test format, for trying `husk parse` end to end
+this is not malware: it's a hand-built config in husk's own test format, for trying `husk parse` end to end
 
 $ husk parse sample.bin
 found config in PE section .data at offset 0, key 0x2e (23 settings)
@@ -51,15 +51,15 @@ Retry_Increase_Attempts           - 0
 Retry_Duration                    - 0
 ```
 
-(Alignment above is reproduced as printed — `RenderText` left-pads names to a
-fixed column width, so a byte-for-byte terminal capture is what you'd
-actually see running this yourself.)
+(The alignment above is reproduced as printed. `RenderText` left-pads names
+to a fixed column width, so this is a byte-for-byte terminal capture, not a
+mockup.)
 
-`husk fixture` hand-builds a config in husk's own encoder — the exact same
-TLV writer, XOR routine, and minimal-but-spec-correct PE builder that the
-test suite uses — and wraps it in a real `.data` section husk's PE reader
-then has to actually find. There's no Cobalt Strike license, no real
-Beacon, and nothing here that runs: it's a fixture, not a payload. See
+`husk fixture` builds a config with husk's own encoder, the same TLV writer,
+XOR routine, and minimal but spec-correct PE builder the test suite uses,
+and wraps it in a real `.data` section that husk's PE reader then has to
+actually find. There's no Cobalt Strike license involved, no real Beacon,
+and nothing here that runs. It's a fixture for testing, not a payload. See
 [`internal/beacon/fixture.go`](internal/beacon/fixture.go) and
 [`pe_fixture.go`](internal/beacon/pe_fixture.go).
 
@@ -76,44 +76,45 @@ make build
 
 ## What the wire format actually is
 
-A Beacon configuration is a run of records, each a 6-byte header — three
-big-endian `uint16` fields: **index**, **type** (1=short, 2=int, 3=str), and
-**length** — followed by `length` bytes of value, the whole thing XORed with
-a single byte before being embedded in the binary. Cobalt Strike has shipped
-exactly two such keys in the wild: `0x69` (Beacon 3) and `0x2e` (Beacon 4).
+A Beacon configuration is a run of records. Each one starts with a 6-byte
+header, three big-endian `uint16` fields (**index**, **type** (1=short,
+2=int, 3=str), and **length**), followed by `length` bytes of value, the
+whole thing XORed with a single byte before being embedded in the binary.
+Cobalt Strike has shipped exactly two such keys in the wild: `0x69` (Beacon
+3) and `0x2e` (Beacon 4).
 
 Three settings carry a further sub-format of their own, each read by its own
 decoder in [`transform.go`](internal/beacon/transform.go):
 
 | Setting | Sub-format |
 | --- | --- |
-| `ProcInject_PrependAppend_x86`/`x64` | Not an opcode stream at all — two length-prefixed byte strings glued around injected shellcode, usually to break naive signature scans of the injected region. |
+| `ProcInject_PrependAppend_x86`/`x64` | Not an opcode stream at all: two length-prefixed byte strings glued around injected shellcode, usually to break naive signature scans of the injected region. |
 | `Malleable_C2_Instructions` | An opcode stream describing how the beacon unwraps a server response before treating it as tasking (`remove N bytes`, `base64 decode`, `XOR mask w/ random key`, …). |
-| `HttpGet_Metadata` / `HttpPost_Metadata` | A richer opcode stream — the compiled form of a Malleable C2 profile's `client { metadata / output }` blocks — describing how the beacon's session id and task output get smuggled into headers, a URI segment, or POST parameters. |
+| `HttpGet_Metadata` / `HttpPost_Metadata` | A richer opcode stream, the compiled form of a Malleable C2 profile's `client { metadata / output }` blocks, describing how the beacon's session id and task output get smuggled into headers, a URI segment, or POST parameters. |
 
-And one field is worth specifically knowing about for triage: **PublicKey**
-(index 7) is rendered with its MD5 alongside the raw bytes, because that
-hash is a well-known threat-intel pivot — Cobalt Strike operators routinely
-reuse one license's key pair across many otherwise-unrelated-looking C2
-deployments, so a shared PublicKey MD5 across two samples is a stronger
-infrastructure link than a shared C2 domain.
+One field worth knowing about specifically for triage: **PublicKey** (index
+7) is rendered with its MD5 alongside the raw bytes, because that hash is a
+well-known threat-intel pivot. Cobalt Strike operators routinely reuse one
+license's key pair across many otherwise-unrelated-looking C2 deployments,
+so a shared PublicKey MD5 across two samples is a stronger infrastructure
+link than a shared C2 domain.
 
-## Design notes — where this departs from the reference implementation
+## Design notes: where this departs from the reference implementation
 
 The most-used public parser for this format ([Sentinel-One's
 `CobaltStrikeParser`](https://github.com/Sentinel-One/CobaltStrikeParser))
 works by taking each setting it already knows about, building that setting's
-own 6-byte header, and searching the decoded blob for a byte-exact match —
-and because a string setting's real length isn't otherwise available to it,
-it retries that search at doubling guessed lengths (16, 32, 64, ... 2048)
+own 6-byte header, and searching the decoded blob for a byte-exact match.
+Because a string setting's real length isn't otherwise available to it, it
+then retries that search at doubling guessed lengths (16, 32, 64, ... 2048)
 until one lands. husk instead walks the blob as a straightforward sequential
 TLV stream, reading each entry's actual length directly from its own header.
 Two things fall out of that:
 
 - No guessing: a string field's length is data that's read, not a parameter
   that has to be rediscovered by trial and error.
-- husk surfaces settings its catalog doesn't recognize yet — a newer Beacon
-  version, a nonstandard build — as `unknown_N` instead of silently missing
+- husk surfaces settings its catalog doesn't recognize yet (a newer Beacon
+  version, a nonstandard build) as `unknown_N` instead of silently missing
   them, since it isn't limited to searching for headers it already expects.
 
 The other departure is in locating the key and offset in the first place.
@@ -121,20 +122,21 @@ The reference implementation hardcodes the two known keys and locates the
 config by searching for fixed byte-signature patterns (what those two known
 keys turn a known-plaintext prefix into). husk instead brute-forces every
 one of the 256 possible single-byte keys against every candidate offset and
-keeps whichever produces the longest run of structurally valid, catalog-
-matching entries (see [`recover.go`](internal/beacon/recover.go)) — slower,
-but it would still find a config keyed with a byte other than the two
-observed so far, and it never needed those two signatures hardcoded to work
-correctly against either of them. The same structural validator is reused,
-rather than duplicated, for the second-stage repeating-4-byte-key heuristic
-that unwraps a stageless beacon's outer encryption layer.
+keeps whichever produces the longest run of structurally valid,
+catalog-matching entries (see [`recover.go`](internal/beacon/recover.go)).
+It's slower, but it would still find a config keyed with a byte other than
+the two observed so far, and it never needed those two signatures hardcoded
+to work correctly against either of them. The same structural validator is
+reused, rather than duplicated, for the second-stage repeating-4-byte-key
+heuristic that unwraps a stageless beacon's outer encryption layer.
 
 ## Testing
 
-Every decode path — every setting kind, both known XOR keys, the repeating-
-key outer layer, PE section extraction, the "this is not a config" case —
-is exercised in `internal/beacon/*_test.go` against blobs husk's own encoder
-built, with no external fixtures or real samples checked into the repo:
+Every decode path (every setting kind, both known XOR keys, the
+repeating-key outer layer, PE section extraction, and the "this is not a
+config" case) is exercised in `internal/beacon/*_test.go`, against blobs
+husk's own encoder built. No external fixtures or real samples are checked
+into the repo:
 
 ```sh
 make test
@@ -156,22 +158,22 @@ make test
 - **The structural validator can, in principle, still be fooled.** Requiring
   five-plus chained, well-typed entries with at least three matching known
   catalog indices makes an accidental match astronomically unlikely on real
-  data, but it isn't a cryptographic guarantee — a deliberately adversarial
-  blob could theoretically be crafted to pass it. This is a niche-format
+  data, but it isn't a cryptographic guarantee. A deliberately adversarial
+  blob could, in theory, be crafted to pass it. Treat this as a niche-format
   parser for defensive triage, not a hardened parser for untrusted network
   input.
-- **Index 54 is genuinely overloaded** in the format itself between
+- **Index 54 is genuinely overloaded** in the format itself, shared between
   `HostHeader` and `SSH_Banner` (see the catalog's doc comment in
-  [`settings.go`](internal/beacon/settings.go)) — husk always labels it
+  [`settings.go`](internal/beacon/settings.go)). husk always labels it
   `HostHeader`, the far more common case.
 
 ## Format reference
 
 The wire format itself was cross-checked against:
 
-- [Sentinel-One/CobaltStrikeParser](https://github.com/Sentinel-One/CobaltStrikeParser) — the reference implementation.
-- [SentinelLabs — The Anatomy of an APT Attack and Cobalt Strike Beacon's Encoded Configuration](https://www.sentinelone.com/labs/the-anatomy-of-an-apt-attack-and-cobaltstrike-beacons-encoded-configuration/)
+- [Sentinel-One/CobaltStrikeParser](https://github.com/Sentinel-One/CobaltStrikeParser): the reference implementation.
+- [SentinelLabs: The Anatomy of an APT Attack and Cobalt Strike Beacon's Encoded Configuration](https://www.sentinelone.com/labs/the-anatomy-of-an-apt-attack-and-cobaltstrike-beacons-encoded-configuration/)
 
 ## License
 
-MIT — see [LICENSE](LICENSE).
+MIT, see [LICENSE](LICENSE).

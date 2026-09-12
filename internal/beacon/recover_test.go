@@ -52,7 +52,7 @@ func TestRecoverRejectsRandomNoise(t *testing.T) {
 	r.Read(noise)
 
 	if _, ok := RecoverConfig(noise); ok {
-		t.Error("RecoverConfig found a config in pure random noise — the structural gate is too weak")
+		t.Error("RecoverConfig found a config in pure random noise: the structural gate is too weak")
 	}
 }
 
@@ -60,7 +60,7 @@ func TestRecoverRepeatingKeyLayer(t *testing.T) {
 	inner := XOR(BuildBlob(syntheticConfig(), 4096), []byte{0x2e})
 
 	key := []byte{0x3c, 0x91, 0x04, 0xaa}
-	// The whole section — including its zero padding — is encrypted with
+	// The whole section, including its zero padding, is encrypted with
 	// the repeating key; it's precisely that padding, once encrypted, that
 	// reveals the key by how often it repeats.
 	plain := append(make([]byte, 8192), inner...)

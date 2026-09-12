@@ -12,9 +12,9 @@ import (
 // blob turning a parse into an unbounded loop.
 const maxEntries = 256
 
-// ReadEntries walks buf as a sequential stream of TLV records — a 6-byte
-// [index][type][length] header (three big-endian uint16 fields) followed by
-// length bytes of value — stopping at the first all-zero header, a type
+// ReadEntries walks buf as a sequential stream of TLV records: a 6-byte
+// [index][type][length] header (three big-endian uint16 fields), followed by
+// length bytes of value. It stops at the first all-zero header, a type
 // outside {short,int,str}, or a length that would run past the buffer.
 //
 // This is a deliberate departure from the reference implementation's
@@ -22,7 +22,7 @@ const maxEntries = 256
 // bytes and, for string settings, retries with doubling guessed lengths
 // until a match turns up (the length isn't otherwise available to it). Here
 // the length is read directly from the entry that's actually being decoded,
-// so no guessing is needed — and, as a side effect, ReadEntries surfaces
+// so no guessing is needed. As a side effect, ReadEntries surfaces
 // every entry in the blob, including setting indices this package's catalog
 // doesn't know about yet (a newer Beacon version, a custom build), as
 // unrecognized rather than silently dropping them.
@@ -43,7 +43,7 @@ func ReadEntries(buf []byte) []Entry {
 			break // padding: the generator zero-fills the rest of the block
 		}
 		if typ != TypeShort && typ != TypeInt && typ != TypeStr {
-			break // not a header we understand — end of real entries
+			break // not a header we understand, so this is the end of the real entries
 		}
 		if (typ == TypeShort && length != 2) || (typ == TypeInt && length != 4) {
 			break // a fixed-width type with the wrong width isn't real data

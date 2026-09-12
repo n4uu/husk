@@ -5,7 +5,7 @@
 //
 // This is a from-scratch, clean-room implementation, written against the
 // wire format as documented publicly and cross-checked line-by-line against
-// SentinelOne's reference parser (see README.md for citations) — no code
+// SentinelOne's reference parser (see README.md for citations). No code
 // from that or any other parser was copied. It exists for defensive
 // tooling: pulling C2 infrastructure and behavior out of an implant found
 // during incident response, before it goes into a blocklist or a report.
@@ -36,7 +36,7 @@ func (t Type) String() string {
 	}
 }
 
-// entryHeaderSize: three big-endian uint16 fields — index, type, length —
+// entryHeaderSize: three big-endian uint16 fields (index, type, length)
 // ahead of every entry's value. The high byte of the index field is always
 // zero in every observed build (indices top out at 73), but the field is a
 // full uint16 in the wire format.

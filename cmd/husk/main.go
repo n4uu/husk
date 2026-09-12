@@ -1,6 +1,6 @@
 // Command husk locates and decodes a Cobalt Strike Beacon configuration
-// block from a PE, a raw section dump, or a memory-dumped shellcode blob —
-// for pulling C2 infrastructure and behavior out of an implant recovered
+// block from a PE, a raw section dump, or a memory-dumped shellcode blob.
+// It pulls C2 infrastructure and behavior out of an implant recovered
 // during incident response.
 package main
 
@@ -44,7 +44,7 @@ func main() {
 }
 
 func usage() {
-	fmt.Fprint(os.Stderr, `husk — Cobalt Strike Beacon configuration extractor
+	fmt.Fprint(os.Stderr, `husk: Cobalt Strike Beacon configuration extractor
 
 usage:
   husk parse [-json] [-all] <file>       decode a Beacon config from a PE, section dump, or memory blob
@@ -127,7 +127,7 @@ func runFixture(args []string) error {
 		beacon.Str(10, "/submit.php", 64),
 		beacon.Raw(11, beacon.MalleableStreamBlob("remove-begin:4", "base64 decode")),
 		beacon.Str(15, `\\.\pipe\msagent_%x`, 128),
-		beacon.Int(37, 305419896), // Watermark — an arbitrary license/build id
+		beacon.Int(37, 305419896), // Watermark: an arbitrary license/build id
 		beacon.Short(38, 1),       // bStageCleanup
 		beacon.Int(40, 0),         // KillDate: unset
 		beacon.Short(43, 4),       // bProcInject_StartRWX: false
@@ -153,6 +153,6 @@ func runFixture(args []string) error {
 	}
 
 	fmt.Fprintf(os.Stderr, "wrote synthetic fixture to %s (%d bytes, key %s)\n", *out, len(payload), *keyHex)
-	fmt.Fprintf(os.Stderr, "this is NOT malware — it's a hand-built config in husk's own test format, for trying `husk parse` end to end\n")
+	fmt.Fprintf(os.Stderr, "this is not malware: it's a hand-built config in husk's own test format, for trying `husk parse` end to end\n")
 	return nil
 }
