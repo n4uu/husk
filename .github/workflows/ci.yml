@@ -1,0 +1,35 @@
+name: ci
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: go vet
+        run: go vet ./...
+
+      - name: go test
+        run: go test -race ./...
+
+      - name: go build
+        run: go build ./...
+
+      - name: gofmt check
+        run: |
+          diff <(gofmt -l .) <(echo -n)
+
+      - name: end-to-end smoke test (synthetic fixture round trip)
+        run: |
+          set -eu
+          go run ./cmd/husk fixture -out /tmp/sample.bin -c2 "ci-smoke-test.invalid,/x"
+          go run ./cmd/husk parse -json /tmp/sample.bin | grep -q ci-smoke-test.invalid
