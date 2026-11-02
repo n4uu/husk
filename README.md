@@ -65,6 +65,17 @@ and nothing here that runs. It's a fixture for testing, not a payload. See
 
 ## Install & use
 
+Prebuilt binaries for Linux, macOS and Windows (amd64 and arm64) are on the
+[releases page](https://github.com/n4uu/husk/releases/latest). They're built
+by GitHub Actions from the tagged commit, never on a workstation, and every
+archive carries a signed build provenance attestation:
+
+```sh
+gh attestation verify husk_*_linux_amd64.tar.gz -R n4uu/husk
+```
+
+To build from source instead:
+
 ```sh
 git clone https://github.com/n4uu/husk
 cd husk

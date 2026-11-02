@@ -1,3 +1,4 @@
 /bin/
 /sample.bin
 *.out
+/dist/
